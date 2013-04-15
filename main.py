@@ -7,16 +7,16 @@ sched = Scheduler()
 email_sent = False
 logger = logging.getLogger("emailer")
 logger.addHandler(log_handler)
+from gmail_imap import gmail_imap
+from gmail_smtp import gmail_smtp
+gmail_imap = gmail_imap(GMAIL_USERNAME, GMAIL_PASSWORD)
+gmail_smtp = gmail_smtp(GMAIL_USERNAME, GMAIL_PASSWORD, debug=True)
+gmail_smtp.login()
 
 @sched.interval_schedule(seconds=30)
 def check_email():
     global email_sent
-    from gmail_imap import gmail_imap
-    from gmail_smtp import gmail_smtp
     if not email_sent:
-        gmail_imap = gmail_imap(GMAIL_USERNAME, GMAIL_PASSWORD)
-        gmail_smtp = gmail_smtp(GMAIL_USERNAME, GMAIL_PASSWORD, debug=True)
-        gmail_smtp.login()
         gmail_imap.mailboxes.load()
         gmail_imap.messages.process("INBOX")
         for message_stub in gmail_imap.messages:
