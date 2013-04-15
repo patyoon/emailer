@@ -28,11 +28,11 @@ def check_email():
                 email_sent = True
                 break
         logger.info("target email not found")
-        gmail_imap.logout()
-        gmail_smtp.logout()
     else:
         logger.info("sent email. shutting down scheduler")
         sched.unschedule_job(check_email.job)
+        gmail_imap.logout()
+        gmail_smtp.logout()
 
 sched.start()
 while not email_sent:
