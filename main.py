@@ -27,6 +27,7 @@ def check_email():
                 logger.info("reply sent")
                 email_sent = True
                 break
+        logger.info("target email not found")
         gmail_imap.logout()
         gmail_smtp.logout()
     else:
