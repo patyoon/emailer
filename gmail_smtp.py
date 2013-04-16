@@ -34,8 +34,8 @@ class gmail_smtp:
         msg['Subject'] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
         smtp_result = None
-        #self.smtp_server.sendmail(GMAIL_USERNAME, to,
-        #                                        msg.as_string().encode('ascii'))
+        self.smtp_server.sendmail(GMAIL_USERNAME, to,
+                                  msg.as_string().encode('ascii'))
         if self.debug and smtp_result:
             errstr = ""
             for recip in smtpresult.keys():

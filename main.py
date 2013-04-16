@@ -13,7 +13,7 @@ gmail_imap = gmail_imap(GMAIL_USERNAME, GMAIL_PASSWORD)
 gmail_smtp = gmail_smtp(GMAIL_USERNAME, GMAIL_PASSWORD, debug=True)
 gmail_smtp.login()
 
-@sched.interval_schedule(seconds=30)
+@sched.interval_schedule(seconds=20)
 def check_email():
     global email_sent
     if not email_sent:
@@ -21,15 +21,23 @@ def check_email():
         gmail_imap.messages.process("INBOX")
         for message_stub in gmail_imap.messages:
             message = gmail_imap.messages.getMessage(message_stub.uid)
-            if TARGET_FROM in message.From and re.search(r'formal', message.Body, re.I):
+            #print (message.From, unicode(message.Body, encoding='EUC-KR').encode('utf-8'),
+            #       unicode(message.Subject, encoding='EUC-KR').encode('utf-8'))
+            if TARGET_FROM in message.From and (re.search(r'%s' %TARGET_STRING,
+                                                          message.Body, re.I|re.U)
+                                                or re.search(r'%s' %TARGET_STRING,
+                                                             message.Subject, re.I |
+                                                             re.U)):
                 logger.info("target email found")
                 gmail_smtp.send_email(TARGET_FROM, "Re: %s" %message.Subject, TARGET_BODY)
                 logger.info("reply sent")
                 email_sent = True
                 break
         logger.info("target email not found")
+        print "not found"
     else:
         logger.info("sent email. shutting down scheduler")
+        print "sent email"
         sched.unschedule_job(check_email.job)
         gmail_imap.logout()
         gmail_smtp.logout()

@@ -1,7 +1,7 @@
 import email, string, re
 from email.parser import HeaderParser
 import gmail_imap,gmail_mailboxes,gmail_message
-
+from email.header import decode_header
 class gmail_messages:
     
     def __init__(self, gmail_server):
@@ -29,7 +29,6 @@ class gmail_messages:
     def parseHeaders(self,entry):
         if(not getattr(self,'headerParser',False) ):
             self.headerParser = HeaderParser()  #See http://docs.python.org/library/email.parser.html#parser-class-api
-        
         headers = self.headerParser.parsestr(entry)
         return headers
     
@@ -44,7 +43,7 @@ class gmail_messages:
         if result != 'OK':
             raise Exception, message
         typ, data = self.server.imap_server.search(None, '(UNDELETED)')
-        fetch_list = string.split(data[0])[-10:]# limit to N most recent messages in mailbox, this is where pagination should be implemented
+        fetch_list = string.split(data[0])[-8:]# limit to N most recent messages in mailbox, this is where pagination should be implemented
         fetch_list = ','.join(fetch_list)
         
         if(fetch_list):
@@ -53,22 +52,19 @@ class gmail_messages:
                 if(len(fm)>1):
                     metadata = self.parseMetadata(fm[0]) #metadata is contained 
                     headers = self.parseHeaders(fm[1])
-                    
                     message = gmail_message.gmail_message()
                     message.id = metadata['id']
                     message.uid = metadata['uid']
                     message.flags = metadata['flags']
                     message.mailbox = mailbox   #UID depends on mailbox location so,
                                                                 #we need to know which owns the message
-        
-                    message.date = headers['Date']
-                    message.From = headers['From']
-                    if( 'Subject' in headers ):
-                        message.Subject = headers['Subject']
-                        
+                    message.date = decode_header(headers['Date'])[0][0]
+                    message.From = decode_header(headers['From'])[0][0]
+                    if( 'Subject' in headers ):                        
+                        message.Subject = decode_header(headers['Subject'])[0][0]
                     self.messages.append(message)
         self.messages.reverse()
-                    
+    
     def __repr__(self):
         return "<gmail_messages:  \n%s\n>" %  (self.messages)
     
@@ -88,11 +84,11 @@ class gmail_messages:
                 msg = email.message_from_string(response_part[1])
                 for part in msg.walk():
                     if str(part.get_content_type()) == 'text/plain':
-                        messagePlainText = messagePlainText + str(part.get_payload())
+                        messagePlainText = messagePlainText + str(part.get_payload(decode=
+                                                                                   True))
                     if str(part.get_content_type()) == 'text/html':
                         messageHTML = messageHTML + str(part.get_payload())
-        
-        
+                
         #create new message object
         message = gmail_message.gmail_message()
         
@@ -101,11 +97,11 @@ class gmail_messages:
         else:
             message.Body = messagePlainText
         if('Subject' in msg):
-            message.Subject = msg['Subject']
-        message.From = msg['From']
+            message.Subject = decode_header(msg['Subject'])[0][0]
+        message.From = decode_header(msg['From'])[0][0]
         
         message.uid = uid
         message.mailbox = self.mailbox
-        message.date = msg['Date']
+        message.date = decode_header(msg['Date'])[0][0]
         
         return message
