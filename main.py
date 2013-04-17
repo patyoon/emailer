@@ -13,7 +13,7 @@ gmail_imap = gmail_imap(GMAIL_USERNAME, GMAIL_PASSWORD)
 gmail_smtp = gmail_smtp(GMAIL_USERNAME, GMAIL_PASSWORD, debug=True)
 gmail_smtp.login()
 
-@sched.interval_schedule(seconds=20)
+@sched.interval_schedule(seconds=30)
 def check_email():
     global email_sent
     if not email_sent:
@@ -21,13 +21,12 @@ def check_email():
         gmail_imap.messages.process("INBOX")
         for message_stub in gmail_imap.messages:
             message = gmail_imap.messages.getMessage(message_stub.uid)
-            #print (message.From, unicode(message.Body, encoding='EUC-KR').encode('utf-8'),
-            #       unicode(message.Subject, encoding='EUC-KR').encode('utf-8'))
-            if TARGET_FROM in message.From and (re.search(r'%s' %TARGET_STRING,
-                                                          message.Body, re.I|re.U)
-                                                or re.search(r'%s' %TARGET_STRING,
-                                                             message.Subject, re.I |
-                                                             re.U)):
+            # if TARGET_FROM in message.From and (re.search(r'%s' %TARGET_STRING,
+            #                                               message.Body, re.I|re.U)
+            #                                     or re.search(r'%s' %TARGET_STRING,
+            #                                                  message.Subject, re.I |
+            #                                                  re.U)):
+            if TARGET_FROM in message.From:
                 logger.info("target email found")
                 gmail_smtp.send_email(TARGET_FROM, "Re: %s" %message.Subject, TARGET_BODY)
                 logger.info("reply sent")
