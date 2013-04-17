@@ -17,7 +17,16 @@ gmail_smtp.login()
 def check_email():
     global email_sent
     if not email_sent:
-        gmail_imap.mailboxes.load()
+        try:
+            gmail_imap.mailboxes.load()
+        except:
+            global gmail_smtp
+            global gmail_imap
+            gmail_imap.logout()
+            gmail_smtp.logout()
+            gmail_imap = gmail_imap(GMAIL_USERNAME, GMAIL_PASSWORD)
+            gmail_smtp = gmail_smtp(GMAIL_USERNAME, GMAIL_PASSWORD, debug=True)
+            gmail_smtp.login()
         gmail_imap.messages.process("INBOX")
         for message_stub in gmail_imap.messages:
             message = gmail_imap.messages.getMessage(message_stub.uid)
